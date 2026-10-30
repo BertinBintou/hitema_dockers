@@ -5,36 +5,50 @@ on: [push, pull_request]
 jobs:
   test:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
 
-      - uses: actions/setup-python@v6
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v6
+
+      - name: Installer Python
+        uses: actions/setup-python@v6
         with:
           python-version: "3.12"
 
-      - run: pip install -r api/requirements.txt
-      - run: cd api && pytest
+      - name: Installer les dépendances
+        run: pip install -r api/requirements.txt
+
+      - name: Lancer les tests
+        run: |
+          cd api
+          pytest
 
   build:
     needs: test
     if: github.event_name == 'push'
     runs-on: ubuntu-latest
+
     permissions:
       contents: read
       packages: write
-    steps:
-      - uses: actions/checkout@v6
 
-      - name: Connexion à GitHub Container Registry
+    steps:
+      - name: Récupérer le code
+        uses: actions/checkout@v6
+
+      - name: Se connecter à GitHub Container Registry
         uses: docker/login-action@v4
         with:
           registry: ghcr.io
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Construire et publier l'image
+      - name: Mettre le nom de l'image en minuscules
+        run: echo "IMAGE_NAME=ghcr.io/${GITHUB_REPOSITORY,,}" >> "$GITHUB_ENV"
+
+      - name: Construire et publier l'image Docker
         uses: docker/build-push-action@v7
         with:
           context: ./api
           push: true
-          tags: ghcr.io/${{ github.repository }}:${{ github.sha }}
+          tags: ${{ env.IMAGE_NAME }}:${{ github.sha }}
