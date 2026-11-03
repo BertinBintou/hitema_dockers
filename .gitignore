@@ -1,0 +1,6 @@
+# Terraform
+terraform-nginx/.terraform/
+terraform-nginx/*.tfstate
+terraform-nginx/*.tfstate.*
+terraform-nginx/crash.log
+terraform-nginx/terraform.tfvars
